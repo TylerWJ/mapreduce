@@ -9,8 +9,9 @@ Finally, if you are unsure how to start the project, we recommend you visit offi
 Team members
 -----------------
 
-1. Alice (alice@wpi.edu)
-2. Bob (bob@wpi.edu)
+1. Tyler Jones (twjones@wpi.edu)
+2. Lorenzo Lopez (lplopez@wpi.edu)
+3. Tom Graham (Tgraham@wpi.edu)
 
 Design Questions
 ------------------
