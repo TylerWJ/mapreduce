@@ -53,7 +53,7 @@ func doMap(
 	encoders := make([]*json.Encoder, nReduce)
 	files := make([]*os.File, nReduce)
 
-	for i := 0; i < nReduce; i++ { // this creates nReduce subfile names for the given file
+	for i := 0; i < nReduce; i++ { // creates nReduce files and encoders
 
 		var createErr error
 		fName := reduceName(jobName, mapTaskNumber, i) // creates the file name
@@ -64,8 +64,7 @@ func doMap(
 		encoders[i] = json.NewEncoder(files[i])
 	}
 
-	for _, kv := range keyValues {
-		// uses ihash to get the index for encoders e
+	for _, kv := range keyValues { // for every key/value, assigns it a file/encoder
 		index := ihash(kv.Key) % uint32(nReduce)
 		encErr := encoders[index].Encode(&kv) // write encoded json string to
 		checkError(encErr)
