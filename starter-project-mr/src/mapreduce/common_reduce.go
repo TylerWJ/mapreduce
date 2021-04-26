@@ -1,5 +1,10 @@
 package mapreduce
 
+import (
+	"encoding/json"
+	"os"
+)
+
 // doReduce does the job of a reduce worker: it reads the intermediate
 // key/value pairs (produced by the map phase) for this task, sorts the
 // intermediate key/value pairs by key, calls the user-defined reduce function
@@ -34,26 +39,29 @@ func doReduce(
 	//
 	// Use checkError to handle errors.
 
-	// Tyler's Notes
+	for i := 0; i < nMap; i++ {
 
-	// This function accepts jobName (the name of the whole map reduce job), reduceTaskNumber, the number of map tasks that were run, and the reduceF function
-	// doMap = map worker: Reads an input file (inFile), calls the mapF function for that file (inputting the file, and the content), partitions the output into nReduce intermediate files
-	// Give mapF a file's name and the content and it returns an array of key/value pairs. Key = word, Value = # of times that word appeared in contents, or a list of 1s???
-	// reduceName - constructs the name of the intermediate file which map task - jobName, mapTask, reduceTask
+		fName := reduceName(jobName, nMap, reduceTaskNumber) // creates the file name
+		f, readErr := os.Open(fName)
+		checkError(readErr)
 
-	// Steps:
-	// 	1. Read the contents of the input file
-	// 	2. Call mapF and pass the file name and the contents of the file - returns an array of key/value pairs for that file
-	// 	3. Partitions the output into Reduce intermediate files
+		dec := json.NewDecoder(f)
 
-	// I have no clue what step 3 means
-	// Im guessing you are given a massive list of key/value pairs from mapF. Step three then takes that list and splits it nReduce times.
-	// This is also the number of reduce tasks needed for this one file (large list of key/value pairs)
-	// After splitting those key value pairs, you then store each partition in a file
-	// The files name includes: Which map task produced them and which reduce task are they for. Why do we need the map task???
-	// Use JSON to convert key/value data structures to a string and store it in a file.
+		var keyValues []KeyValue
+		for {
+			decErr := dec.Decode(&keyValues)
+			checkError(decErr)
+		}
 
-	// What is mapTask and reduceTask?
-	// ihash function below is used to determine which file a given key belongs into
+		fNameMerge := mergeName(jobName, reduceTaskNumber)
+		mf, createErr := os.Create("../mfiles/" + fNameMerge) // stores the output files in the ofiles folder
+		checkError(createErr)
+
+		enc := json.NewEncoder(mf)
+		for key in keyValues {
+			enc.Encode(KeyValue{key, reduceF(key, keyValues.Value)})
+		}
+
+	}
 
 }

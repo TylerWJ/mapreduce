@@ -67,6 +67,11 @@ func doMap(
 			checkError(encErr)
 		}
 
+		// Questions:
+		// ihash???
+		// location of output files???
+		// ceil? will cause out of bounds in for loop
+
 	}
 
 	// Tyler's Notes
