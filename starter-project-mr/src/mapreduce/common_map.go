@@ -42,6 +42,41 @@ func doMap(
 	// Remember to close the file after you have written all the values!
 	// Use checkError to handle errors.
 
+	// Tyler's Notes
+
+	// 	Application:
+	// master.go creates a master_rpc server for workers to register
+	// workers will register using the RPC call Register. The workers will also start up their own RPC servers so that master can dispatch them tasks
+	// Workers register using RPC call Register()
+	// RPC allows processes to communicate with one another
+	// As tasks become available, master.go uses schedule() in scedule.go to assign the different tasks to the different workers (and how to handle worker failure)
+	// Each input file = 1 map task
+	// Master then makes a call to doMap atleast once for each task, Sequential -> doMap() directly, Distributed -> DoTask() in worker.go to give the task to a worker
+	// Each call to do map does:
+	// 	1. Read the contents of the input file
+	// 	2. Call mapF and passes the file name and the contents of the file - returns an array of key/value pairs for that file
+	// 	3. Partitions the output into nReduce files
+	// For the ith map task, it will generate a list of files with the following naming pattern: fi-0, fi-1 ... fi-[nReduce-1]
+	// So, the total number of files = # of files * nReduce (partition files per file)
+	// The master then calls doReduce() atleast once for each reduce task, Sequential -> doMap() directly, Distributed -> DoTask() in worker.go to give the task to a worker
+	// For teh jth doReduce() call, doReduce() will go through f0-j, f1-j, ..., f[n-1]-j
+	// Basically, doMap goes splits each file into R subfiles, and then doReduce iterates through each file and works on the same jth subfile
+	// After reduce, master calls mr.merge() in master_splitmerge.go which merges the the nReduce files from the previous step
+
+	// This function accepts jobName, mapTaskNumber, a file, number of reduce tasks that will be run, and the mapF function
+	// doMap = map worker: Reads an input file (inFile), calls the mapF function for that file (inputting the file, and the content), partitions the output into nReduce intermediate files
+	// Give mapF a file's name and the content and it returns an array of key/value pairs. Key = word, Value = # of times that word appeared in contents, or a list of 1s???
+	// reduceName - constructs the name of the intermediate file which map task - jobName, mapTask, reduceTask
+
+	// Im guessing you are given a massive list of key/value pairs from mapF. Step three then takes that list and splits it nReduce times.
+	// This is also the number of reduce tasks needed for this one file (large list of key/value pairs)
+	// After splitting those key value pairs, you then store each partition in a file
+	// The files name includes: Which map task produced them and which reduce task are they for. Why do we need the map task???
+	// Use JSON to convert key/value data structures to a string and store it in a file.
+	// where do we store all of these partition files???
+
+	// ihash function below is used to determine which file a given key belongs into
+
 }
 
 func ihash(s string) uint32 {
