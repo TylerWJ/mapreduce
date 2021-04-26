@@ -1,7 +1,10 @@
 package mapreduce
 
 import (
+	"encoding/json"
 	"hash/fnv"
+	"io/ioutil"
+	"os"
 )
 
 // doMap does the job of a map worker: it reads one of the input files
@@ -42,6 +45,30 @@ func doMap(
 	// Remember to close the file after you have written all the values!
 	// Use checkError to handle errors.
 
+	content, readErr := ioutil.ReadFile(inFile) // read the content of the file
+	checkError(readErr)
+
+	keyValues := mapF(inFile, string(content)) // collect the key values of the file
+	size := len(keyValues) / nReduce           // ceil/floor???
+
+	for i := 0; i < nReduce; i++ { // this creates nReduce subfile names for the given file
+
+		fName := reduceName(jobName, mapTaskNumber, i)  // creates the file name
+		f, createErr := os.Create("../ofiles/" + fName) // stores the output files in the ofiles folder
+		checkError(createErr)
+
+		start := i * size // the starting point in the key/value array for each subfile
+		end := start + size
+		subContent := keyValues[start:end] // end is exclusive
+
+		enc := json.NewEncoder(f)
+		for _, kv := range subContent {
+			encErr := enc.Encode(&kv)
+			checkError(encErr)
+		}
+
+	}
+
 	// Tyler's Notes
 
 	// 	Application:
@@ -60,22 +87,26 @@ func doMap(
 	// So, the total number of files = # of files * nReduce (partition files per file)
 	// The master then calls doReduce() atleast once for each reduce task, Sequential -> doMap() directly, Distributed -> DoTask() in worker.go to give the task to a worker
 	// For teh jth doReduce() call, doReduce() will go through f0-j, f1-j, ..., f[n-1]-j
-	// Basically, doMap goes splits each file into R subfiles, and then doReduce iterates through each file and works on the same jth subfile
+	// Basically, doMap goes splits each file into R subfiles, and then doReduce iterates through all of the files R times and works only on a subsection of each file
 	// After reduce, master calls mr.merge() in master_splitmerge.go which merges the the nReduce files from the previous step
+	// Lastly, master shuts down each worker's RPC and then finally, it's own
+
+	// Where do we store all of these partition files???
+	// What is the purpose of ihash?
 
 	// This function accepts jobName, mapTaskNumber, a file, number of reduce tasks that will be run, and the mapF function
 	// doMap = map worker: Reads an input file (inFile), calls the mapF function for that file (inputting the file, and the content), partitions the output into nReduce intermediate files
 	// Give mapF a file's name and the content and it returns an array of key/value pairs. Key = word, Value = # of times that word appeared in contents, or a list of 1s???
+
+	//	Helper functions:
 	// reduceName - constructs the name of the intermediate file which map task - jobName, mapTask, reduceTask
+	// ihash function below is used to determine which file a given key belongs into
 
 	// Im guessing you are given a massive list of key/value pairs from mapF. Step three then takes that list and splits it nReduce times.
 	// This is also the number of reduce tasks needed for this one file (large list of key/value pairs)
 	// After splitting those key value pairs, you then store each partition in a file
 	// The files name includes: Which map task produced them and which reduce task are they for. Why do we need the map task???
 	// Use JSON to convert key/value data structures to a string and store it in a file.
-	// where do we store all of these partition files???
-
-	// ihash function below is used to determine which file a given key belongs into
 
 }
 
