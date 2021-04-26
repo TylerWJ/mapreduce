@@ -49,29 +49,26 @@ func doMap(
 	checkError(readErr)
 
 	keyValues := mapF(inFile, string(content)) // collect the key values of the file
-	size := len(keyValues) / nReduce           // ceil/floor???
+
+	encoders := make([]*json.Encoder, nReduce)
+	files := make([]*os.File, nReduce)
 
 	for i := 0; i < nReduce; i++ { // this creates nReduce subfile names for the given file
 
-		fName := reduceName(jobName, mapTaskNumber, i)  // creates the file name
-		f, createErr := os.Create("../ofiles/" + fName) // stores the output files in the ofiles folder
+		var createErr error
+		fName := reduceName(jobName, mapTaskNumber, i) // creates the file name
+		files[i], createErr = os.Create(fName)         // stores the output files in the ofiles folder
 		checkError(createErr)
+		defer files[i].Close()
 
-		start := i * size // the starting point in the key/value array for each subfile
-		end := start + size
-		subContent := keyValues[start:end] // end is exclusive
+		encoders[i] = json.NewEncoder(files[i])
+	}
 
-		enc := json.NewEncoder(f)
-		for _, kv := range subContent {
-			encErr := enc.Encode(&kv)
-			checkError(encErr)
-		}
-
-		// Questions:
-		// ihash???
-		// location of output files???
-		// ceil? will cause out of bounds in for loop
-
+	for _, kv := range keyValues {
+		// uses ihash to get the index for encoders e
+		index := ihash(kv.Key) % uint32(nReduce)
+		encErr := encoders[index].Encode(&kv) // write encoded json string to
+		checkError(encErr)
 	}
 
 	// Tyler's Notes
@@ -91,7 +88,7 @@ func doMap(
 	// For the ith map task, it will generate a list of files with the following naming pattern: fi-0, fi-1 ... fi-[nReduce-1]
 	// So, the total number of files = # of files * nReduce (partition files per file)
 	// The master then calls doReduce() atleast once for each reduce task, Sequential -> doMap() directly, Distributed -> DoTask() in worker.go to give the task to a worker
-	// For teh jth doReduce() call, doReduce() will go through f0-j, f1-j, ..., f[n-1]-j
+	// For the jth doReduce() call, doReduce() will go through f0-j, f1-j, ..., f[n-1]-j
 	// Basically, doMap goes splits each file into R subfiles, and then doReduce iterates through all of the files R times and works only on a subsection of each file
 	// After reduce, master calls mr.merge() in master_splitmerge.go which merges the the nReduce files from the previous step
 	// Lastly, master shuts down each worker's RPC and then finally, it's own

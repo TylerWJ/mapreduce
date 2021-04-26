@@ -39,29 +39,30 @@ func doReduce(
 	//
 	// Use checkError to handle errors.
 
+	var keyValues []KeyValue
+
 	for i := 0; i < nMap; i++ {
 
-		fName := reduceName(jobName, nMap, reduceTaskNumber) // creates the file name
-		f, readErr := os.Open(fName)
+		fName := reduceName(jobName, nMap, reduceTaskNumber)
+		f, readErr := os.Open(fName) // opens the corresponding file
 		checkError(readErr)
 
-		dec := json.NewDecoder(f)
+		dec := json.NewDecoder(f) // creates a decoder for the file
 
-		var keyValues []KeyValue
-		for {
+		for { // loops through the file, Json string -> []KeyValue
 			decErr := dec.Decode(&keyValues)
 			checkError(decErr)
 		}
 
-		fNameMerge := mergeName(jobName, reduceTaskNumber)
-		mf, createErr := os.Create("../mfiles/" + fNameMerge) // stores the output files in the ofiles folder
-		checkError(createErr)
+	}
 
-		enc := json.NewEncoder(mf)
-		for key in keyValues {
-			enc.Encode(KeyValue{key, reduceF(key, keyValues.Value)})
-		}
+	fNameMerge := mergeName(jobName, reduceTaskNumber)
+	mf, createErr := os.Create("../mfiles/" + fNameMerge) // creates new file and places it in mfiles folder
+	checkError(createErr)
 
+	enc := json.NewEncoder(mf)
+	for _, key := range keyValues {
+		enc.Encode(KeyValue{key.Key, reduceF(key.Key, keyValues.Value)})
 	}
 
 }
