@@ -19,8 +19,13 @@ func mapF(document string, value string) (res []mapreduce.KeyValue) {
 	var newArray []mapreduce.KeyValue
 
 	// Splits the given string at Unicode, and rets an array of slices
-	w := strings.FieldsFunc(value, func(test int32) bool {
-		return !unicode.IsLetter(test)
+
+	// w := strings.FieldsFunc(value, func(test int32) bool {
+	// 	return !unicode.IsLetter(test)
+	// })
+
+	w := strings.FieldsFunc(value, func(r rune) bool {
+		return !unicode.IsLetter(r)
 	})
 
 	// Can use blank identifier because word is all that's needed
