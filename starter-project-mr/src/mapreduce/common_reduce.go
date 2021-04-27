@@ -41,28 +41,46 @@ func doReduce(
 
 	var keyValues []KeyValue
 
-	for i := 0; i < nMap; i++ {
+	decoders := make([]*json.Decoder, nMap)
+	oFiles := make([]*os.File, nMap)
 
-		fName := reduceName(jobName, nMap, reduceTaskNumber)
-		f, readErr := os.Open(fName) // opens the corresponding file
+	for i := 0; i < nMap; i++ { // for each file
+		//fmt.Println("Hello")
+		var readErr error
+		fName := reduceName(jobName, i, reduceTaskNumber) // construct the intermediate file name
+		oFiles[i], readErr = os.Open(fName)               // find and open the intermediate file
 		checkError(readErr)
 
-		dec := json.NewDecoder(f) // creates a decoder for the file
-
-		for { // loops through the file, Json string -> []KeyValue
-			decErr := dec.Decode(&keyValues)
-			checkError(decErr)
+		decoders[i] = json.NewDecoder(oFiles[i]) // creates a decoder for the file
+		for {
+			var keyVal KeyValue
+			decErr := decoders[i].Decode(&keyVal)
+			if decErr != nil {
+				break
+			} else {
+				keyValues = append(keyValues, keyVal)
+			}
 		}
 
+		defer oFiles[i].Close()
+
 	}
 
-	fNameMerge := mergeName(jobName, reduceTaskNumber)
-	mf, createErr := os.Create("../mfiles/" + fNameMerge) // creates new file and places it in mfiles folder
+	kvHash := make(map[string][]string) // Key: String, Value: String array
+
+	for i := 0; i < len(keyValues); i++ {
+		kvHash[keyValues[i].Key] = append(kvHash[keyValues[i].Key], keyValues[i].Value)
+	}
+
+	fNameMerge := mergeName(jobName, reduceTaskNumber) // create the name of the merge file
+	mf, createErr := os.Create(fNameMerge)             // create the merge file
 	checkError(createErr)
 
-	enc := json.NewEncoder(mf)
+	enc := json.NewEncoder(mf) // create an encoder for the merge file
 	for _, key := range keyValues {
-		enc.Encode(KeyValue{key.Key, reduceF(key.Key, keyValues.Value)})
+		enc.Encode(KeyValue{key.Key, reduceF(key.Key, kvHash[key.Key])})
 	}
+
+	defer mf.Close()
 
 }

@@ -73,6 +73,7 @@ func doMap(
 	// Tyler's Notes
 
 	// 	Application:
+
 	// master.go creates a master_rpc server for workers to register
 	// workers will register using the RPC call Register. The workers will also start up their own RPC servers so that master can dispatch them tasks
 	// Workers register using RPC call Register()
