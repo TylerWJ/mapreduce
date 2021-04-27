@@ -19,6 +19,7 @@ func mapF(document string, value string) (res []mapreduce.KeyValue) {
 // should be a single output value for that key.
 func reduceF(key string, values []string) string {
 	// TODO:
+	return strconv.Itoa(len(values))
 }
 
 // Can be run in 3 ways:
