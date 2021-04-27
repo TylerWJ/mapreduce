@@ -10,8 +10,7 @@ Team members
 -----------------
 
 1. Tyler Jones (twjones@wpi.edu)
-2. Lorenzo Lopez (lplopez@wpi.edu)
-3. Tom Graham (Tgraham@wpi.edu)
+2. Tom Graham (Tgraham@wpi.edu)
 
 Design Questions
 ------------------
@@ -23,6 +22,9 @@ f1-0, ... f1-[nReduce-1]
 ...
 f[n-1]-0 ... f[n-1][nReduce-1]
 
+MapReduce calls reduceName and mergeName in common.go to construct the unique file names.
+reduceName uses the job name, map task and reduce task to create the file name ("mrtmp." + jobName + "-" + strconv.Itoa(mapTask) + "-" + strconv.Itoa(reduceTask)
+mergeName uses the job name and the redeuce task to create the file name. ("mrtmp." + jobName + "-res-" + strconv.Itoa(reduceTask)
 
 (1 point) 2. Following the previous question, for the reduce task r, what are the names of files will it work on?
 
