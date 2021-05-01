@@ -40,18 +40,8 @@ func mapF(document string, value string) (res []mapreduce.KeyValue) {
 // list of that key's string value (merged across all inputs). The return value
 // should be a single output value for that key.
 func reduceF(key string, values []string) string {
-	sum := 0
-	for i := 0; i < len(values); i++ {
-		n, sumErr := strconv.Atoi(values[i])
-		if sumErr != nil {
-			fmt.Println("Sum Error")
-			os.Exit(1)
-		}
-		sum += n
-	}
 
-	s := strconv.Itoa(sum)
-	return s
+	return strconv.Itoa(len(values))
 }
 
 // Can be run in 3 ways:

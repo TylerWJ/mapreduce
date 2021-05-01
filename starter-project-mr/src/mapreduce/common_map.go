@@ -17,6 +17,12 @@ func doMap(
 	nReduce int, // the number of reduce task that will be run ("R" in the paper)
 	mapF func(file string, contents string) []KeyValue,
 ) {
+
+	// doMap : Task - Reads a file, call mapF and partitions the key/value pairs into nReduce intermediate files
+	// doReduce : Task - For each file, find the corresponding intermediate file, combine the '1's into an array for each word, call reduceF to sum the '1's for each word. Writes key/value pairs to merge file
+	// mapF : Returns an array of key/value pairs. Each value is '1' which means that there can be duplicate keys in the array.
+	// reduceF : Takes a list of
+
 	// TODO:
 	// You will need to write this function.
 	// You can find the filename for this map task's input to reduce task number
@@ -83,8 +89,8 @@ func doMap(
 	// Master then makes a call to doMap atleast once for each task, Sequential -> doMap() directly, Distributed -> DoTask() in worker.go to give the task to a worker
 	// Each call to do map does:
 	// 	1. Read the contents of the input file
-	// 	2. Call mapF and passes the file name and the contents of the file - returns an array of key/value pairs for that file
-	// 	3. Partitions the output into nReduce files
+	// 	2. Call mapF and passes the file name and the contents of the file - returns an array of key/value pairs for that file - each value is simply "1" and there are multiple keys
+	// 	3. Partitions the output into nReduce files - for each key, call the hash function and it determines which file the key/value will be stored in
 	// For the ith map task, it will generate a list of files with the following naming pattern: fi-0, fi-1 ... fi-[nReduce-1]
 	// So, the total number of files = # of files * nReduce (partition files per file)
 	// The master then calls doReduce() atleast once for each reduce task, Sequential -> doMap() directly, Distributed -> DoTask() in worker.go to give the task to a worker
@@ -103,6 +109,10 @@ func doMap(
 	//	Helper functions:
 	// reduceName - constructs the name of the intermediate file which map task - jobName, mapTask, reduceTask
 	// ihash function below is used to determine which file a given key belongs into
+
+	// Each job conatins multiple tasks
+	// Each map job stores a given file's key/value pairs in nReduce files
+	// In this example, the tasks are run sequentially via for loop
 
 	// Im guessing you are given a massive list of key/value pairs from mapF. Step three then takes that list and splits it nReduce times.
 	// This is also the number of reduce tasks needed for this one file (large list of key/value pairs)
