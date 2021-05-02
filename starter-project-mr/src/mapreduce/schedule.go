@@ -3,17 +3,38 @@ package mapreduce
 // schedule starts and waits for all tasks in the given phase (Map or Reduce).
 func (mr *Master) schedule(phase jobPhase) {
 	var ntasks int
-	var nios int // number of inputs (for reduce) or outputs (for map)
+	var nios int
 	switch phase {
 	case mapPhase:
-		ntasks = len(mr.files)
-		nios = mr.nReduce
+		ntasks = len(mr.files) // --> nMap
+		nios = mr.nReduce      // --> nReduce
 	case reducePhase:
-		ntasks = mr.nReduce
-		nios = len(mr.files)
+		ntasks = mr.nReduce  // --> nReduce
+		nios = len(mr.files) // --> nMap
 	}
 
 	debug("Schedule: %v %v tasks (%d I/Os)\n", ntasks, phase, nios)
+
+	// for i := 0; i < ntasks; i++ {
+	// 	var worker Worker
+	// 	worker.name = strconv.Itoa(i)
+	// 	worker.Map =
+	// 	worker.Reduce = reduceF
+	// }
+
+	var worker Worker
+	worker.register(mr.address)
+
+	w := <-mr.registerChannel
+
+	// How I think this is gunna work:
+
+	// Read from the worker channel
+	// For every worker available
+	// if phase = mapPhase
+	//
+	// if phase = reducePhase
+	//
 
 	// All ntasks tasks have to be scheduled on workers, and only once all of
 	// them have been completed successfully should the function return.

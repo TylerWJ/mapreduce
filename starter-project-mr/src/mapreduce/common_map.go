@@ -18,10 +18,17 @@ func doMap(
 	mapF func(file string, contents string) []KeyValue,
 ) {
 
+	// The program is the job, and the job can run multiple tasks/workers
+
 	// doMap : Task - Reads a file, call mapF and partitions the key/value pairs into nReduce intermediate files
 	// doReduce : Task - For each file, find the corresponding intermediate file, combine the '1's into an array for each word, call reduceF to sum the '1's for each word. Writes key/value pairs to merge file
 	// mapF : Returns an array of key/value pairs. Each value is '1' which means that there can be duplicate keys in the array.
-	// reduceF : Takes a list of
+	// reduceF : Takes a list of '1's and combines them using the len operator
+
+	// Total map tasks: nMap (# of files)
+	// Total reduce tasks: nReduce (# of intermediate files)
+
+	// complete all of the map tasks first, then complete all of the reduce tasks
 
 	// TODO:
 	// You will need to write this function.
