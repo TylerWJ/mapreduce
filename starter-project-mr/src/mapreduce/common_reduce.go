@@ -1,5 +1,10 @@
 package mapreduce
 
+import (
+	"encoding/json"
+	"os"
+)
+
 // doReduce does the job of a reduce worker: it reads the intermediate
 // key/value pairs (produced by the map phase) for this task, sorts the
 // intermediate key/value pairs by key, calls the user-defined reduce function
@@ -33,5 +38,49 @@ func doReduce(
 	// file.Close()
 	//
 	// Use checkError to handle errors.
+
+	var keyValues []KeyValue
+
+	decoders := make([]*json.Decoder, nMap)
+	oFiles := make([]*os.File, nMap)
+
+	for i := 0; i < nMap; i++ { // for each file
+		//fmt.Println("Hello")
+		var readErr error
+		fName := reduceName(jobName, i, reduceTaskNumber) // construct the intermediate file name
+		oFiles[i], readErr = os.Open(fName)               // find and open the intermediate file
+		checkError(readErr)
+
+		decoders[i] = json.NewDecoder(oFiles[i]) // creates a decoder for the file
+		for {
+			var keyVal KeyValue
+			decErr := decoders[i].Decode(&keyVal)
+			if decErr != nil {
+				break
+			} else {
+				keyValues = append(keyValues, keyVal)
+			}
+		}
+
+		defer oFiles[i].Close()
+
+	}
+
+	kvHash := make(map[string][]string) // Key: String, Value: String array
+
+	for i := 0; i < len(keyValues); i++ {
+		kvHash[keyValues[i].Key] = append(kvHash[keyValues[i].Key], keyValues[i].Value)
+	}
+
+	fNameMerge := mergeName(jobName, reduceTaskNumber) // create the name of the merge file
+	mf, createErr := os.Create(fNameMerge)             // create the merge file
+	checkError(createErr)
+
+	enc := json.NewEncoder(mf) // create an encoder for the merge file
+	for _, key := range keyValues {
+		enc.Encode(KeyValue{key.Key, reduceF(key.Key, kvHash[key.Key])})
+	}
+
+	defer mf.Close()
 
 }
