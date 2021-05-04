@@ -15,26 +15,31 @@ func (mr *Master) schedule(phase jobPhase) {
 
 	debug("Schedule: %v %v tasks (%d I/Os)\n", ntasks, phase, nios)
 
-	// for i := 0; i < ntasks; i++ {
-	// 	var worker Worker
-	// 	worker.name = strconv.Itoa(i)
-	// 	worker.Map =
-	// 	worker.Reduce = reduceF
-	// }
+	var task DoTaskArgs
 
-	var worker Worker
-	worker.register(mr.address)
+	for i := 0; i < ntasks; i++ {
+		wName := <-mr.registerChannel
 
-	w := <-mr.registerChannel
+		task.JobName = mr.jobName
+		task.File = mr.files[i]
+		task.Phase = phase
+		task.TaskNumber = i
+		task.NumOtherPhase = nios
+
+		for !call(wName, "Worker.DoTask", task, nil) {
+			wName = <-mr.registerChannel
+		}
+
+		go func() {
+			mr.registerChannel <- wName
+		}()
+
+	}
 
 	// How I think this is gunna work:
 
-	// Read from the worker channel
-	// For every worker available
-	// if phase = mapPhase
-	//
-	// if phase = reducePhase
-	//
+	// Register each worker
+	// DoTask
 
 	// All ntasks tasks have to be scheduled on workers, and only once all of
 	// them have been completed successfully should the function return.
